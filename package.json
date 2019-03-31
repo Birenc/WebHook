@@ -11,7 +11,7 @@
     "api.ai",
     "heroku"
   ],
-  "author": "Sandeepkumar Parekh",
+  "author": "Biren C",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.17.2",
