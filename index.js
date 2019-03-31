@@ -6,10 +6,10 @@ const app = express();
 
 app.use(bodyParser.json());
 
-const recipepuppyHost = 'http://www.recipepuppy.com/api/?q=';
-const currencyConvertHost = "http://api.fixer.io/latest?";
-const chucknorrisHost = 'https://api.chucknorris.io/jokes/random';
-const wikiPediaApiHost = 'https://en.wikipedia.org/w/api.php?'; //https://www.mediawiki.org/wiki/API:Opensearch
+//const recipepuppyHost = 'http://www.recipepuppy.com/api/?q=';
+//const currencyConvertHost = "http://api.fixer.io/latest?";
+//const chucknorrisHost = 'https://api.chucknorris.io/jokes/random';
+const wikiPediaApiHost = 'https://www.mediawiki.org/wiki/API:Opensearch'; 
 
 app.get('/dummyget', function (req, res) {
     res.setHeader('Content-Type', 'application/json');
@@ -19,55 +19,7 @@ app.get('/dummyget', function (req, res) {
 
 app.post('/webhook', function (req, res) {
 
-    if (req.body.result.parameters['Bored']) {
-        callChuckNorrisFact()
-            .then((output) => {
-                let result = toApiAiResponseMessage(output.value, output.value, toTelgramObject(output.value, 'Markdown'));
-                res.setHeader('Content-Type', 'application/json');
-                res.send(JSON.stringify(result));
-            })
-            .catch(errorHandler);
-    }
-    else if (req.body.result.parameters['FoodItem']) {
-        var fooditem = req.body.result.parameters['FoodItem'];
-        callRecipePuppy(fooditem)
-            .then((output) => {
-
-                let displayText = `Found recipe for: ${output.title} at ${output.href}`;
-                let telegramText = htmlEntities('*Found*-' + output.title + '\n' + '* It has following Ingredients*-' + output.ingredients + '\n' + '* You can check it out at*- ' + output.href);
-                let result = toApiAiResponseMessage(displayText, displayText, toTelgramObject(telegramText, 'Markdown'));
-                console.log(result);
-                res.setHeader('Content-Type', 'application/json');
-                res.send(JSON.stringify(result));
-            })
-            .catch(errorHandler);
-    }
-    else if (req.body.result.parameters['currency-from'] && req.body.result.parameters['currency-to']) {
-        var currencyFrom = req.body.result.parameters['currency-from'];
-        var currencyTo = req.body.result.parameters['currency-to'];
-        var number = 1.0;
-        if (req.body.result.parameters['number']) {
-            number = parseFloat(req.body.result.parameters['number']);
-            if (number <= 0) {
-                number = 1.0;
-            }
-        }
-        callFixerIo(currencyFrom, currencyTo)
-            .then((output) => {
-                let resultText = Array();
-                currencyTo.forEach(function (cur) {
-                    var toNumber = number * parseFloat(output.rates[cur.toUpperCase()]);
-                    toNumber = toNumber.toFixed(3);
-                    resultText.push(`${number} ${output.base} = ${toNumber} ${cur}`);
-                }, this);
-
-                let displayText = resultText.join();
-                let result = toApiAiResponseMessage(displayText, displayText, toTelgramObject(resultText.join('\n'), 'Markdown'));
-                res.setHeader('Content-Type', 'application/json');
-                res.send(JSON.stringify(result));
-            });
-    }
-    else if (req.body.result.parameters['wikisearchterm']) {
+   if (req.body.result.parameters['wikisearchterm']) {
         var searchTerm = req.body.result.parameters['wikisearchterm'];
         callWikiPediaApi(searchTerm)
             .then((output) => {
@@ -94,59 +46,6 @@ app.post('/webhook', function (req, res) {
 });
 
 
-function callRecipePuppy(fooditem) {
-    return new Promise((resolve, reject) => {
-        http.get(recipepuppyHost + fooditem, (res) => {
-            let body = '';
-            res.on('data', (d) => body += d);
-            res.on('end', () => {
-                let jO = JSON.parse(body);
-                let firstItem = jO.results[Math.floor((Math.random() * jO.results.length))];
-                resolve(firstItem);
-            });
-
-            res.on('error', (error) => {
-                reject(error);
-            });
-        });
-    });
-}
-
-function callFixerIo(currencyFrom, currencyTo) {
-    return new Promise((resolve, reject) => {
-        currencyTo = currencyTo.join().toUpperCase();
-        let url = `${currencyConvertHost}base=${currencyFrom}&symbols=${currencyTo}`;
-        http.get(url, (res) => {
-            let body = '';
-            res.on('data', (d) => body += d);
-            res.on('end', () => {
-                let jO = JSON.parse(body);
-                resolve(jO);
-            });
-
-            res.on('error', (error) => {
-                reject(error);
-            });
-        });
-    });
-}
-
-function callChuckNorrisFact() {
-    return new Promise((resolve, reject) => {
-        https.get(chucknorrisHost, (res) => {
-            let body = '';
-            res.on('data', (d) => body += d);
-            res.on('end', () => {
-                let jO = JSON.parse(body);
-                resolve(jO);
-            });
-
-            res.on('error', (error) => {
-                reject(error);
-            });
-        });
-    });
-}
 
 function callWikiPediaApi(searchTerm, format = "json", action = "opensearch", limit = 2, profile = "fuzzy") {
     return new Promise((resolve, reject) => {
