@@ -9,7 +9,7 @@ app.use(bodyParser.json());
 //const recipepuppyHost = 'http://www.recipepuppy.com/api/?q=';
 //const currencyConvertHost = "http://api.fixer.io/latest?";
 //const chucknorrisHost = 'https://api.chucknorris.io/jokes/random';
-const wikiPediaApiHost = 'https://www.mediawiki.org/wiki/API:Opensearch'; 
+const wikiPediaApiHost = 'https://www.mediawiki.org/wiki/API'; 
 
 app.get('/dummyget', function (req, res) {
     res.setHeader('Content-Type', 'application/json');
